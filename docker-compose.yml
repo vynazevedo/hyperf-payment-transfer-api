@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  hyperf:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        env: dev
+    container_name: hyperf-app
+    volumes:
+      - ./:/app:cached
+      - /app/vendor
+    ports:
+      - "9501:9501"
+    environment:
+      - APP_ENV=dev
+      - SCAN_CACHEABLE=false
+      # Database
+      - DB_DRIVER=mysql
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_DATABASE=payment_transfer
+      - DB_USERNAME=hyperf
+      - DB_PASSWORD=secret
+      # Redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      # Watch
+      - WATCH_DIR=/app
+      - WATCH_EXT=php,env
+      - WATCH_RESTART_TIME=3
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    restart: unless-stopped
+    command: sh -c "composer install && php bin/hyperf.php server:watch"
+    healthcheck:
+      test: ["CMD", "php", "-v"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql:
+    image: mysql:8.0
+    container_name: hyperf-mysql
+    platform: linux/x86_64  # Importante para M1/M2
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=payment_transfer
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=username
+      - MYSQL_PASSWORD=password
+    volumes:
+      - mysql-data:/var/lib/mysql:cached
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d:cached
+      - ./docker/mysql/initdb.d:/docker-entrypoint-initdb.d:cached
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u$$MYSQL_USER", "-p$$MYSQL_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: hyperf-redis
+    command: redis-server --appendonly yes --requirepass secret
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data:cached
+      - ./docker/redis/conf:/usr/local/etc/redis:cached
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    container_name: hyperf-adminer
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=mysql
+      - ADMINER_DESIGN=dracula
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mysql-data:
+    driver: local
+  redis-data:
+    driver: local
