@@ -2,7 +2,7 @@ services:
   hyperf:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
       args:
         env: dev
     container_name: hyperf-app
@@ -49,7 +49,7 @@ services:
     platform: linux/x86_64  # Importante para M1/M2
     command: --default-authentication-plugin=mysql_native_password
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
       - MYSQL_DATABASE=payment_transfer
       - MYSQL_ROOT_PASSWORD=root
@@ -72,7 +72,6 @@ services:
   redis:
     image: redis:alpine
     container_name: hyperf-redis
-    command: redis-server --appendonly yes --requirepass secret
     ports:
       - "6379:6379"
     volumes:
