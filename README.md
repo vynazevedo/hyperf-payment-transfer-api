@@ -1,6 +1,6 @@
 # API de Transferência de Pagamento
 
-Uma API de transferência de pagamento assíncrona de alto desempenho construída com o Framework Hyperf. Este serviço fornece transferências seguras de dinheiro entre pessoas (peer-to-peer) com notificações em tempo real e rastreamento de transações.
+Este projeto nasceu de um desafio técnico que encontrei e decidi implementar como parte dos meus estudos em desenvolvimento backend com PHP. O objetivo principal é aprimorar meus conhecimentos em arquiteturas modernas e boas práticas de programação.
 
 ## Stack Tecnológica
 
@@ -36,7 +36,7 @@ Uma API de transferência de pagamento assíncrona de alto desempenho construíd
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/hyperf-payment-transfer-api.git
+git clone https://github.com/vynazevedo/hyperf-payment-transfer-api.git
 cd hyperf-payment-transfer-api
 ```
 
