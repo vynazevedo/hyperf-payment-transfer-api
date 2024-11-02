@@ -21,8 +21,8 @@ services:
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_DATABASE=payment_transfer
-      - DB_USERNAME=hyperf
-      - DB_PASSWORD=secret
+      - DB_USERNAME=username
+      - DB_PASSWORD=password
       # Redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
