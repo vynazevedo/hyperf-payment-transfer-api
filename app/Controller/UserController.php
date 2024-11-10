@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Model\User;
+use App\Repository\UserRepository;
 use Exception;
-use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpServer\Annotation\Controller;
 use Hyperf\HttpServer\Annotation\RequestMapping;
 use Hyperf\HttpServer\Contract\RequestInterface;
@@ -16,8 +15,9 @@ use Psr\Http\Message\ResponseInterface as PsrResponseInterface;
 #[Controller(prefix: '/users')]
 class UserController
 {
-    #[Inject]
-    protected User $user;
+    public function __construct(private readonly UserRepository $userRepository)
+    {
+    }
 
     /**
      * @param RequestInterface $request
@@ -43,6 +43,13 @@ class UserController
             ])->withStatus(422);
         }
 
+        if ($this->userRepository->emailExists($data['email'])) {
+            return $response->json([
+                'status' => 'error',
+                'message' => 'Email já cadastrado',
+            ])->withStatus(422);
+        }
+
         if (empty($data['cpf']) || strlen($data['cpf']) !== 11) {
             return $response->json([
                 'status' => 'error',
@@ -50,38 +57,16 @@ class UserController
             ])->withStatus(422);
         }
 
-        if (empty($data['password']) || strlen($data['password']) < 6) {
+        if ($this->userRepository->cpfExists($data['cpf'])) {
             return $response->json([
                 'status' => 'error',
-                'message' => 'A senha deve ter no mínimo 6 caracteres',
-            ])->withStatus(422);
-        }
-
-        if (empty($data['type']) || ! in_array($data['type'], ['common', 'merchant'])) {
-            return $response->json([
-                'status' => 'error',
-                'message' => 'Tipo de usuário inválido',
-            ])->withStatus(422);
-        }
-
-        if ($this->user->where('email', $data['email'])->exists()) {
-            return $response->json([
-                'status' => 'error',
-                'message' => 'Este email já está em uso',
-            ])->withStatus(422);
-        }
-
-        if ($this->user->where('cpf', $data['cpf'])->exists()) {
-            return $response->json([
-                'status' => 'error',
-                'message' => 'Este CPF já está em uso',
+                'message' => 'CPF já cadastrado',
             ])->withStatus(422);
         }
 
         try {
             $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
-
-            $user = $this->user->create($data);
+            $user = $this->userRepository->create($data);
 
             return $response->json([
                 'status' => 'success',
@@ -92,7 +77,6 @@ class UserController
             return $response->json([
                 'status' => 'error',
                 'message' => 'Erro ao criar usuário',
-                'error' => $e->getMessage(),
             ])->withStatus(500);
         }
     }
@@ -106,7 +90,7 @@ class UserController
     public function show(int $id, ResponseInterface $response): PsrResponseInterface
     {
         try {
-            $user = $this->user->findOrFail($id);
+            $user = $this->userRepository->findOrFail($id);
 
             return $response->json([
                 'status' => 'success',
@@ -129,7 +113,7 @@ class UserController
     public function balance(int $id, ResponseInterface $response): PsrResponseInterface
     {
         try {
-            $user = $this->user->findOrFail($id);
+            $user = $this->userRepository->findOrFail($id);
 
             return $response->json([
                 'status' => 'success',
@@ -155,7 +139,7 @@ class UserController
     public function index(RequestInterface $request, ResponseInterface $response): PsrResponseInterface
     {
         $perPage = (int) $request->input('per_page', 15);
-        $users = $this->user->paginate($perPage);
+        $users = $this->userRepository->paginate($perPage);
 
         return $response->json([
             'status' => 'success',
