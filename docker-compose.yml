@@ -49,7 +49,7 @@ services:
     platform: linux/x86_64  # Importante para M1/M2
     command: --default-authentication-plugin=mysql_native_password
     ports:
-      - "3307:3306"
+      - "3308:3306"
     environment:
       - MYSQL_DATABASE=payment_transfer
       - MYSQL_ROOT_PASSWORD=root
